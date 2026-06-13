@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P Web Share</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #aaa;
+            font-size: 1rem;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #00d4ff;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed rgba(0, 212, 255, 0.4);
+            border-radius: 12px;
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .drop-zone .icon { font-size: 3rem; margin-bottom: 10px; }
+        .drop-zone p { color: #aaa; }
+        .drop-zone span { color: #00d4ff; cursor: pointer; }
+
+        #fileInput { display: none; }
+
+        /* File Info */
+        .file-info {
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-info .file-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        .file-info .file-size { color: #aaa; font-size: 0.9rem; }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            color: white;
+        }
+
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Share Link */
+        .share-link {
+            display: none;
+            background: rgba(123, 47, 247, 0.2);
+            border: 1px solid rgba(123, 47, 247, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .share-link p { color: #aaa; font-size: 0.85rem; margin-bottom: 8px; }
+
+        .link-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .link-box input {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .copy-btn {
+            background: #7b2ff7;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover { opacity: 0.9; }
+
+        /* Progress */
+        .progress-section { display: none; }
+
+        .progress-bar-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            height: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        /* Status */
+        .status {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .status.info { background: rgba(0, 212, 255, 0.15); color: #00d4ff; display: block; }
+        .status.success { background: rgba(0, 200, 100, 0.15); color: #00c864; display: block; }
+        .status.error { background: rgba(255, 80, 80, 0.15); color: #ff5050; display: block; }
+        .status.warning { background: rgba(255, 180, 0, 0.15); color: #ffb400; display: block; }
+
+        /* Receive section */
+        .receive-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .receive-input input {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .receive-input input::placeholder { color: #666; }
+
+        /* Connection indicator */
+        .conn-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #555;
+            margin-right: 8px;
+        }
+
+        .conn-indicator.connected { background: #00c864; }
+        .conn-indicator.connecting { background: #ffb400; animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .divider {
+            text-align: center;
+            color: #444;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #333;
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .badge {
+            background: rgba(0,212,255,0.2);
+            color: #00d4ff;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ P2P Web Share</h1>
+            <p>Direct browser-to-browser file transfer. No server storage. Completely private.</p>
+        </div>
+
+        <!-- SEND SECTION -->
+        <div class="card">
+            <h2>📤 Send a File <span class="badge">SENDER</span></h2>
+
+            <div class="drop-zone" id="dropZone">
+                <div class="icon">📁</div>
+                <p>Drag & drop a file here</p>
+                <p>or <span onclick="document.getElementById('fileInput').click()">browse to upload</span></p>
+                <p style="margin-top:8px; font-size:0.8rem; color:#555;">Max 50MB</p>
+            </div>
+            <input type="file" id="fileInput">
+
+            <div class="file-info" id="fileInfo">
+                <div class="file-name" id="fileName"></div>
+                <div class="file-size" id="fileSize"></div>
+            </div>
+
+            <button class="btn btn-primary" id="shareBtn" disabled>
+                🔗 Generate Share Link
+            </button>
+
+            <div class="share-link" id="shareLink">
+                <p>📋 Share this link with the receiver:</p>
+                <div class="link-box">
+                    <input type="text" id="linkInput" readonly>
+                    <button class="copy-btn" onclick="copyLink()">Copy</button>
+                </div>
+            </div>
+
+            <div class="progress-section" id="sendProgress">
+                <p style="margin-bottom:5px;">
+                    <span class="conn-indicator connecting" id="sendIndicator"></span>
+                    <span id="sendStatusText">Waiting for receiver...</span>
+                </p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="sendProgressBar"></div>
+                </div>
+                <div class="progress-stats">
+                    <span id="sendPercent">0%</span>
+                    <span id="sendSpeed">0 MB/s</span>
+                    <span id="sendSize">0 MB</span>
+                </div>
+            </div>
+
+            <div class="status" id="sendStatus"></div>
+        </div>
+
+        <div class="divider">OR</div>
+
+        <!-- RECEIVE SECTION -->
+        <div class="card">
+            <h2>📥 Receive a File <span class="badge">RECEIVER</span></h2>
+
+            <div class="receive-input">
+                <input type="text" id="roomInput" placeholder="Paste share link or room ID here...">
+                <button class="btn btn-primary" id="joinBtn" style="width:auto; margin:0; padding: 12px 20px;" onclick="joinRoom()">
+                    Join
+                </button>
+            </div>
+
+            <div class="progress-section" id="receiveProgress">
+                <p style="margin-bottom:5px;">
+                    <span class="conn-indicator connecting" id="recvIndicator"></span>
+                    <span id="recvStatusText">Connecting...</span>
+                </p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="recvProgressBar"></div>
+                </div>
+                <div class="progress-stats">
+                    <span id="recvPercent">0%</span>
+                    <span id="recvSpeed">0 MB/s</span>
+                    <span id="recvSize">0 MB</span>
+                </div>
+            </div>
+
+            <div class="status" id="recvStatus"></div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let selectedFile = null;
+        let roomId = null;
+        let peerConnection = null;
+        let dataChannel = null;
+        let receivedChunks = [];
+        let receivedSize = 0;
+        let totalSize = 0;
+        let startTime = null;
+        const CHUNK_SIZE = 16384; // 16KB chunks
+
+        const iceConfig = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // ── FILE SELECTION ──────────────────────────────────
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) selectFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) selectFile(e.target.files[0]);
+        });
+
+        function selectFile(file) {
+            if (file.size > 50 * 1024 * 1024) {
+                showStatus('sendStatus', 'File too large! Max 50MB.', 'error');
+                return;
+            }
+            selectedFile = file;
+            document.getElementById('fileName').textContent = '📄 ' + file.name;
+            document.getElementById('fileSize').textContent = formatSize(file.size);
+            document.getElementById('fileInfo').style.display = 'block';
+            document.getElementById('shareBtn').disabled = false;
+            showStatus('sendStatus', 'File selected! Click "Generate Share Link".', 'info');
+        }
+
+        // ── GENERATE ROOM & SHARE LINK ──────────────────────
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            if (!selectedFile) return;
+            roomId = generateRoomId();
+            socket.emit('create-room', roomId);
+
+            const shareUrl = `${window.location.origin}?room=${roomId}`;
+            document.getElementById('linkInput').value = shareUrl;
+            document.getElementById('shareLink').style.display = 'block';
+            document.getElementById('sendProgress').style.display = 'block';
+            document.getElementById('shareBtn').disabled = true;
+            showStatus('sendStatus', '⏳ Waiting for receiver to join...', 'info');
+        });
+
+        function copyLink() {
+            const input = document.getElementById('linkInput');
+            input.select();
+            document.execCommand('copy');
+            showStatus('sendStatus', '✅ Link copied! Share it with the receiver.', 'success');
+        }
+
+        // ── SOCKET EVENTS (SENDER) ──────────────────────────
+        socket.on('receiver-joined', async () => {
+            showStatus('sendStatus', '✅ Receiver connected! Starting transfer...', 'success');
+            document.getElementById('sendIndicator').className = 'conn-indicator connected';
+            document.getElementById('sendStatusText').textContent = 'Receiver connected!';
+            await startSending();
+        });
+
+        async function startSending() {
+            peerConnection = new RTCPeerConnection(iceConfig);
+
+            dataChannel = peerConnection.createDataChannel('fileTransfer');
+            dataChannel.binaryType = 'arraybuffer';
+
+            dataChannel.onopen = () => sendFile();
+
+            peerConnection.onicecandidate = (e) => {
+                if (e.candidate) socket.emit('ice-candidate', { roomId, candidate: e.candidate });
+            };
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('offer', { roomId, offer });
+
+            // Send file metadata
+            socket.emit('file-info', {
+                roomId,
+                fileInfo: { name: selectedFile.name, size: selectedFile.size, type: selectedFile.type }
+            });
+        }
+
+        socket.on('answer', async (answer) => {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        });
+
+        socket.on('ice-candidate', async (candidate) => {
+            try { await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) {}
+        });
+
+        // ── SEND FILE ───────────────────────────────────────
+        function sendFile() {
+            const reader = new FileReader();
+            startTime = Date.now();
+            let offset = 0;
+
+            reader.onload = (e) => {
+                const fileData = e.target.result;
+
+                function sendChunk() {
+                    if (offset >= fileData.byteLength) {
+                        socket.emit('transfer-complete', roomId);
+                        showStatus('sendStatus', '🎉 File sent successfully!', 'success');
+                        document.getElementById('sendIndicator').className = 'conn-indicator connected';
+                        document.getElementById('sendStatusText').textContent = 'Transfer complete!';
+                        return;
+                    }
+
+                    if (dataChannel.bufferedAmount > dataChannel.bufferedAmountLowThreshold) {
+                        dataChannel.onbufferedamountlow = () => { sendChunk(); };
+                        return;
+                    }
+
+                    const chunk = fileData.slice(offset, offset + CHUNK_SIZE);
+                    dataChannel.send(chunk);
+                    offset += CHUNK_SIZE;
+
+                    // Update progress
+                    const progress = Math.min((offset / fileData.byteLength) * 100, 100);
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    const speed = (offset / 1024 / 1024) / elapsed;
+                    updateProgress('send', progress, speed, offset, fileData.byteLength);
+
+                    setTimeout(sendChunk, 0);
+                }
+                sendChunk();
+            };
+            reader.readAsArrayBuffer(selectedFile);
+        }
+
+        // ── AUTO JOIN FROM URL ──────────────────────────────
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const room = params.get('room');
+            if (room) {
+                document.getElementById('roomInput').value = room;
+                showStatus('recvStatus', '🔗 Room ID detected! Click Join to connect.', 'info');
+            }
+        };
+
+        // ── JOIN ROOM (RECEIVER) ────────────────────────────
+        function joinRoom() {
+            let input = document.getElementById('roomInput').value.trim();
+            if (!input) { showStatus('recvStatus', 'Please enter a room ID or link!', 'error'); return; }
+
+            // Extract room ID from URL if full link pasted
+            if (input.includes('?room=')) input = input.split('?room=')[1];
+
+            roomId = input;
+            socket.emit('join-room', roomId);
+            document.getElementById('receiveProgress').style.display = 'block';
+            showStatus('recvStatus', '⏳ Connecting to sender...', 'info');
+        }
+
+        socket.on('room-not-found', () => {
+            showStatus('recvStatus', '❌ Room not found! Check the link.', 'error');
+        });
+
+        socket.on('file-info', (info) => {
+            totalSize = info.size;
+            showStatus('recvStatus', `📄 Receiving: ${info.name} (${formatSize(info.size)})`, 'info');
+        });
+
+        socket.on('offer', async (offer) => {
+            peerConnection = new RTCPeerConnection(iceConfig);
+            receivedChunks = [];
+            receivedSize = 0;
+            startTime = Date.now();
+
+            peerConnection.ondatachannel = (e) => {
+                const channel = e.channel;
+                channel.binaryType = 'arraybuffer';
+
+                channel.onopen = () => {
+                    document.getElementById('recvIndicator').className = 'conn-indicator connected';
+                    document.getElementById('recvStatusText').textContent = 'Connected! Receiving...';
+                    showStatus('recvStatus', '✅ Connected! Receiving file...', 'success');
+                };
+
+                channel.onmessage = (e) => {
+                    receivedChunks.push(e.data);
+                    receivedSize += e.data.byteLength;
+                    const progress = (receivedSize / totalSize) * 100;
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    const speed = (receivedSize / 1024 / 1024) / elapsed;
+                    updateProgress('recv', progress, speed, receivedSize, totalSize);
+                };
+            };
+
+            peerConnection.onicecandidate = (e) => {
+                if (e.candidate) socket.emit('ice-candidate', { roomId, candidate: e.candidate });
+            };
+
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            socket.emit('answer', { roomId, answer });
+        });
+
+        socket.on('transfer-complete', () => {
+            const blob = new Blob(receivedChunks);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'received_file';
+            a.click();
+            URL.revokeObjectURL(url);
+            showStatus('recvStatus', '🎉 File received and downloaded successfully!', 'success');
+            document.getElementById('recvIndicator').className = 'conn-indicator connected';
+            document.getElementById('recvStatusText').textContent = 'Transfer complete!';
+            updateProgress('recv', 100, 0, totalSize, totalSize);
+        });
+
+        socket.on('peer-disconnected', () => {
+            showStatus('sendStatus', '⚠️ Peer disconnected.', 'warning');
+            showStatus('recvStatus', '⚠️ Sender disconnected.', 'warning');
+        });
+
+        // ── HELPERS ─────────────────────────────────────────
+        function generateRoomId() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+        }
+
+        function updateProgress(type, percent, speed, received, total) {
+            const prefix = type === 'send' ? 'send' : 'recv';
+            document.getElementById(prefix + 'ProgressBar').style.width = percent + '%';
+            document.getElementById(prefix + 'Percent').textContent = Math.round(percent) + '%';
+            document.getElementById(prefix + 'Speed').textContent = speed.toFixed(2) + ' MB/s';
+            document.getElementById(prefix + 'Size').textContent = formatSize(received) + ' / ' + formatSize(total);
+        }
+
+        function showStatus(id, msg, type) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.className = 'status ' + type;
+        }
+    </script>
+</body>
+</html>
