@@ -328,7 +328,7 @@
             showStatus('recvStatus','⏳ Connecting...','info');
             document.getElementById('receiveProgress').style.display = 'block';
             await initPeer();
-            const conn = peer.connect(peerId, { reliable:true });
+            const conn = peer.connect(peerId, { reliable:true, serialization:'binary' });
             conn.on('open', () => {
                 document.getElementById('recvStatusText').textContent = 'Connected!';
                 showStatus('recvStatus','✅ Connected! Waiting for file...','success');
