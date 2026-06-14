@@ -1,94 +1,64 @@
-/**
- * server.js
- * P2P Web Share - Signaling Server
- * Handles WebRTC signaling only - no file data passes through this server
- */
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
+const io = new Server(server, { 
+  cors: { origin: '*' },
+  maxHttpBufferSize: 1e7
 });
 
-app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-// Store room information
 const rooms = {};
 
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  // Create or join a room
   socket.on('create-room', (roomId) => {
-    rooms[roomId] = { sender: socket.id, receiver: null };
+    rooms[roomId] = { sender: socket.id };
     socket.join(roomId);
+    socket.emit('room-created', roomId);
     console.log('Room created:', roomId);
   });
 
-  // Receiver joins room
   socket.on('join-room', (roomId) => {
-    if (rooms[roomId]) {
-      rooms[roomId].receiver = socket.id;
-      socket.join(roomId);
-      // Notify sender that receiver joined
-      socket.to(roomId).emit('receiver-joined');
-      console.log('Receiver joined room:', roomId);
-    } else {
+    if (!rooms[roomId]) {
       socket.emit('room-not-found');
+      return;
     }
+    socket.join(roomId);
+    rooms[roomId].receiver = socket.id;
+    socket.to(roomId).emit('receiver-ready');
+    console.log('Receiver joined room:', roomId);
   });
 
-  // WebRTC signaling - offer
-  socket.on('offer', ({ roomId, offer }) => {
-    socket.to(roomId).emit('offer', offer);
+  socket.on('file-info', ({ room, name, size }) => {
+    socket.to(room).emit('file-info', { name, size });
   });
 
-  // WebRTC signaling - answer
-  socket.on('answer', ({ roomId, answer }) => {
-    socket.to(roomId).emit('answer', answer);
+  socket.on('file-chunk', ({ room, data, offset }) => {
+    socket.to(room).emit('file-chunk', { data, offset });
+    socket.emit('chunk-ack', offset);
   });
 
-  // WebRTC signaling - ICE candidates
-  socket.on('ice-candidate', ({ roomId, candidate }) => {
-    socket.to(roomId).emit('ice-candidate', candidate);
+  socket.on('file-done', ({ room }) => {
+    socket.to(room).emit('file-done');
+    console.log('Transfer complete in room:', room);
   });
 
-  // File metadata (not the file itself!)
-  socket.on('file-info', ({ roomId, fileInfo }) => {
-    socket.to(roomId).emit('file-info', fileInfo);
-  });
-
-  // Transfer complete notification
-  socket.on('transfer-complete', (roomId) => {
-    socket.to(roomId).emit('transfer-complete');
-  });
-
-  // Handle disconnect
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-    // Notify other user in room
-    for (const roomId in rooms) {
-      if (rooms[roomId].sender === socket.id || rooms[roomId].receiver === socket.id) {
-        socket.to(roomId).emit('peer-disconnected');
-        delete rooms[roomId];
-        break;
+    for (const id in rooms) {
+      if (rooms[id].sender === socket.id) {
+        socket.to(id).emit('sender-disconnected');
+        delete rooms[id];
       }
     }
   });
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Signaling server running on http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });

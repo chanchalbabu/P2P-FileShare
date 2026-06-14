@@ -1,384 +1,284 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P2P Web Share</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container { width: 100%; max-width: 600px; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .header h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-        }
-        .header p { color: #aaa; }
-        .card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 20px;
-        }
-        .card h2 { font-size: 1.2rem; margin-bottom: 20px; color: #00d4ff; }
-        .drop-zone {
-            border: 2px dashed rgba(0,212,255,0.4);
-            border-radius: 12px;
-            padding: 50px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 20px;
-        }
-        .drop-zone:hover { border-color: #00d4ff; background: rgba(0,212,255,0.05); }
-        .drop-zone .icon { font-size: 3rem; margin-bottom: 10px; }
-        .drop-zone p { color: #aaa; }
-        .drop-zone span { color: #00d4ff; cursor: pointer; }
-        #fileInput { display: none; }
-        .file-info {
-            background: rgba(0,212,255,0.1);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .file-name { font-weight: bold; margin-bottom: 5px; }
-        .file-size { color: #aaa; font-size: 0.9rem; }
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 10px;
-        }
-        .btn-primary { background: linear-gradient(90deg, #00d4ff, #7b2ff7); color: white; }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .share-link {
-            display: none;
-            background: rgba(123,47,247,0.2);
-            border: 1px solid rgba(123,47,247,0.4);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-        .share-link p { color: #aaa; font-size: 0.85rem; margin-bottom: 8px; }
-        .link-box { display: flex; gap: 10px; }
-        .link-box input {
-            flex: 1;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            padding: 10px;
-            color: white;
-            font-size: 0.85rem;
-        }
-        .copy-btn {
-            background: #7b2ff7;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 15px;
-            color: white;
-            cursor: pointer;
-        }
-        .progress-section { display: none; margin-top: 15px; }
-        .progress-bar-container {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            height: 12px;
-            margin: 15px 0;
-            overflow: hidden;
-        }
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
-            border-radius: 10px;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        .progress-stats { display: flex; justify-content: space-between; font-size: 0.85rem; color: #aaa; }
-        .status {
-            text-align: center;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 0.9rem;
-            display: none;
-        }
-        .status.info { background: rgba(0,212,255,0.15); color: #00d4ff; display: block; }
-        .status.success { background: rgba(0,200,100,0.15); color: #00c864; display: block; }
-        .status.error { background: rgba(255,80,80,0.15); color: #ff5050; display: block; }
-        .status.warning { background: rgba(255,180,0,0.15); color: #ffb400; display: block; }
-        .receive-input { display: flex; gap: 10px; margin-bottom: 15px; }
-        .receive-input input {
-            flex: 1;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            padding: 12px;
-            color: white;
-            font-size: 1rem;
-        }
-        .receive-input input::placeholder { color: #666; }
-        .badge {
-            background: rgba(0,212,255,0.2);
-            color: #00d4ff;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            margin-left: 8px;
-        }
-        .divider { text-align: center; color: #444; margin: 20px 0; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P2P Web Share</title>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);min-height:100vh;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.container{width:100%;max-width:600px}
+.header{text-align:center;margin-bottom:40px}
+.header h1{font-size:2.5rem;background:linear-gradient(90deg,#00d4ff,#7b2ff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px}
+.header p{color:#aaa}
+.card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:30px;margin-bottom:20px}
+.card h2{font-size:1.2rem;margin-bottom:20px;color:#00d4ff}
+.drop-zone{border:2px dashed rgba(0,212,255,0.4);border-radius:12px;padding:50px 20px;text-align:center;cursor:pointer;transition:all 0.3s;margin-bottom:20px}
+.drop-zone:hover,.drop-zone.dragover{border-color:#00d4ff;background:rgba(0,212,255,0.05)}
+.drop-zone .icon{font-size:3rem;margin-bottom:10px}
+.drop-zone p{color:#aaa}
+.drop-zone span{color:#00d4ff;cursor:pointer}
+#fileInput{display:none}
+.file-info{background:rgba(0,212,255,0.1);border-radius:8px;padding:15px;margin-bottom:20px;display:none}
+.file-name{font-weight:bold;margin-bottom:5px}
+.file-size{color:#aaa;font-size:0.9rem}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.3s;margin-bottom:10px}
+.btn-primary{background:linear-gradient(90deg,#00d4ff,#7b2ff7);color:white}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.share-link{display:none;background:rgba(123,47,247,0.2);border:1px solid rgba(123,47,247,0.4);border-radius:10px;padding:15px;margin-top:15px}
+.share-link p{color:#aaa;font-size:0.85rem;margin-bottom:8px}
+.link-box{display:flex;gap:10px}
+.link-box input{flex:1;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px;color:white;font-size:0.85rem}
+.copy-btn{background:#7b2ff7;border:none;border-radius:8px;padding:10px 15px;color:white;cursor:pointer;font-size:0.9rem}
+.progress-section{display:none;margin-top:15px}
+.progress-bar-container{background:rgba(255,255,255,0.1);border-radius:10px;height:12px;margin:15px 0;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,#00d4ff,#7b2ff7);border-radius:10px;width:0%;transition:width 0.2s}
+.progress-stats{display:flex;justify-content:space-between;font-size:0.85rem;color:#aaa}
+.status{text-align:center;padding:12px;border-radius:8px;margin-top:15px;font-size:0.9rem;display:none}
+.status.info{background:rgba(0,212,255,0.15);color:#00d4ff;display:block}
+.status.success{background:rgba(0,200,100,0.15);color:#00c864;display:block}
+.status.error{background:rgba(255,80,80,0.15);color:#ff5050;display:block}
+.receive-input{display:flex;gap:10px;margin-bottom:15px}
+.receive-input input{flex:1;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:12px;color:white;font-size:1rem}
+.receive-input input::placeholder{color:#666}
+.badge{background:rgba(0,212,255,0.2);color:#00d4ff;padding:3px 10px;border-radius:20px;font-size:0.75rem;margin-left:8px}
+.divider{text-align:center;color:#444;margin:20px 0}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>⚡ P2P Web Share</h1>
-            <p>Direct browser-to-browser file transfer. No server storage. Completely private.</p>
-        </div>
+<div class="container">
+  <div class="header">
+    <h1>⚡ P2P Web Share</h1>
+    <p>Direct browser-to-browser file transfer. No server storage.</p>
+  </div>
 
-        <div class="card">
-            <h2>📤 Send a File <span class="badge">SENDER</span></h2>
-            <div class="drop-zone" id="dropZone">
-                <div class="icon">📁</div>
-                <p>Drag & drop a file here</p>
-                <p>or <span onclick="document.getElementById('fileInput').click()">browse to upload</span></p>
-                <p style="margin-top:8px;font-size:0.8rem;color:#555;">Max 50MB</p>
-            </div>
-            <input type="file" id="fileInput">
-            <div class="file-info" id="fileInfo">
-                <div class="file-name" id="fileName"></div>
-                <div class="file-size" id="fileSize"></div>
-            </div>
-            <button class="btn btn-primary" id="shareBtn" disabled>🔗 Generate Share Link</button>
-            <div class="share-link" id="shareLink">
-                <p>📋 Share this link with the receiver:</p>
-                <div class="link-box">
-                    <input type="text" id="linkInput" readonly>
-                    <button class="copy-btn" onclick="copyLink()">Copy</button>
-                </div>
-            </div>
-            <div class="progress-section" id="sendProgress">
-                <p id="sendStatusText">Waiting for receiver...</p>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="sendProgressBar"></div>
-                </div>
-                <div class="progress-stats">
-                    <span id="sendPercent">0%</span>
-                    <span id="sendSpeed">0 MB/s</span>
-                    <span id="sendSize">0 MB</span>
-                </div>
-            </div>
-            <div class="status" id="sendStatus"></div>
-        </div>
-
-        <div class="divider">— OR —</div>
-
-        <div class="card">
-            <h2>📥 Receive a File <span class="badge">RECEIVER</span></h2>
-            <div class="receive-input">
-                <input type="text" id="roomInput" placeholder="Paste share link here...">
-                <button class="btn btn-primary" style="width:auto;margin:0;padding:12px 20px;" onclick="joinRoom()">Join</button>
-            </div>
-            <div class="progress-section" id="receiveProgress">
-                <p id="recvStatusText">Connecting...</p>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="recvProgressBar"></div>
-                </div>
-                <div class="progress-stats">
-                    <span id="recvPercent">0%</span>
-                    <span id="recvSpeed">0 MB/s</span>
-                    <span id="recvSize">0 MB</span>
-                </div>
-            </div>
-            <div class="status" id="recvStatus"></div>
-        </div>
+  <div class="card">
+    <h2>📤 Send a File <span class="badge">SENDER</span></h2>
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">📁</div>
+      <p>Drag & drop a file here</p>
+      <p>or <span onclick="document.getElementById('fileInput').click()">browse to upload</span></p>
+      <p style="margin-top:8px;font-size:0.8rem;color:#555;">Max 50MB</p>
     </div>
+    <input type="file" id="fileInput">
+    <div class="file-info" id="fileInfo">
+      <div class="file-name" id="fileName"></div>
+      <div class="file-size" id="fileSize"></div>
+    </div>
+    <button class="btn btn-primary" id="shareBtn" disabled>🔗 Generate Share Link</button>
+    <div class="share-link" id="shareLink">
+      <p>📋 Share this link with the receiver:</p>
+      <div class="link-box">
+        <input type="text" id="linkInput" readonly>
+        <button class="copy-btn" onclick="copyLink()">Copy</button>
+      </div>
+    </div>
+    <div class="progress-section" id="sendProgress">
+      <p id="sendStatusText">Waiting for receiver...</p>
+      <div class="progress-bar-container"><div class="progress-bar" id="sendProgressBar"></div></div>
+      <div class="progress-stats">
+        <span id="sendPercent">0%</span>
+        <span id="sendSpeed">0 KB/s</span>
+        <span id="sendSize">0 B</span>
+      </div>
+    </div>
+    <div class="status" id="sendStatus"></div>
+  </div>
 
-    <script>
-        let peer = null;
-        let selectedFile = null;
-        let myPeerId = null;
-        let startTime = null;
-        let receivedChunks = [];
-        let receivedSize = 0;
-        let totalSize = 0;
-        let receivedFileName = 'received_file';
-        const CHUNK_SIZE = 16384;
+  <div class="divider">— OR —</div>
 
-        function initPeer() {
-            return new Promise((resolve, reject) => {
-                peer = new Peer({
-                    config: {
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'turn:global.relay.metered.ca:80', username: 'e1a564166e2b6f8f5d46ab8d', credential: '9fPw0pBNklBPtMqb' },
-                            { urls: 'turn:global.relay.metered.ca:443', username: 'e1a564166e2b6f8f5d46ab8d', credential: '9fPw0pBNklBPtMqb' },
-                            { urls: 'turn:global.relay.metered.ca:443?transport=tcp', username: 'e1a564166e2b6f8f5d46ab8d', credential: '9fPw0pBNklBPtMqb' }
-                        ]
-                    }
-                });
-                peer.on('open', (id) => { myPeerId = id; resolve(id); });
-                peer.on('error', (err) => {
-                    showStatus('sendStatus', '❌ Error: ' + err.type, 'error');
-                    showStatus('recvStatus', '❌ Error: ' + err.type, 'error');
-                    reject(err);
-                });
-            });
-        }
+  <div class="card">
+    <h2>📥 Receive a File <span class="badge">RECEIVER</span></h2>
+    <div class="receive-input">
+      <input type="text" id="roomInput" placeholder="Paste share link here...">
+      <button class="btn btn-primary" style="width:auto;margin:0;padding:12px 20px;" onclick="joinRoom()">Join</button>
+    </div>
+    <div class="progress-section" id="receiveProgress">
+      <p id="recvStatusText">Connecting...</p>
+      <div class="progress-bar-container"><div class="progress-bar" id="recvProgressBar"></div></div>
+      <div class="progress-stats">
+        <span id="recvPercent">0%</span>
+        <span id="recvSpeed">0 KB/s</span>
+        <span id="recvSize">0 B</span>
+      </div>
+    </div>
+    <div class="status" id="recvStatus"></div>
+  </div>
+</div>
 
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
+<script>
+const CHUNK_SIZE = 64 * 1024;
+let socket = null;
+let selectedFile = null;
+let myRole = null;
+let myRoom = null;
+let receivedChunks = [];
+let receivedSize = 0;
+let totalSize = 0;
+let receivedFileName = '';
+let startTime = null;
+let lastBytes = 0;
+let lastTime = null;
 
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); if(e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]); });
-        fileInput.addEventListener('change', (e) => { if(e.target.files[0]) selectFile(e.target.files[0]); });
+function initSocket() {
+  if (socket && socket.connected) return socket;
+  socket = io(window.location.origin, { transports: ['websocket', 'polling'] });
+  socket.on('connect', () => console.log('Connected:', socket.id));
+  return socket;
+}
 
-        function selectFile(file) {
-            if (file.size > 50*1024*1024) { showStatus('sendStatus','❌ Max 50MB!','error'); return; }
-            selectedFile = file;
-            document.getElementById('fileName').textContent = '📄 ' + file.name;
-            document.getElementById('fileSize').textContent = formatSize(file.size);
-            document.getElementById('fileInfo').style.display = 'block';
-            document.getElementById('shareBtn').disabled = false;
-            showStatus('sendStatus','✅ File selected! Click Generate Share Link.','info');
-        }
+function genRoomId() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
-        document.getElementById('shareBtn').addEventListener('click', async () => {
-            if (!selectedFile) return;
-            document.getElementById('shareBtn').disabled = true;
-            showStatus('sendStatus','⏳ Initializing...','info');
-            await initPeer();
-            const shareUrl = window.location.origin + window.location.pathname + '?peer=' + myPeerId;
-            document.getElementById('linkInput').value = shareUrl;
-            document.getElementById('shareLink').style.display = 'block';
-            document.getElementById('sendProgress').style.display = 'block';
-            showStatus('sendStatus','⏳ Waiting for receiver...','info');
+function formatSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
 
-            peer.on('connection', (conn) => {
-                showStatus('sendStatus','✅ Receiver connected! Sending...','success');
-                document.getElementById('sendStatusText').textContent = 'Receiver connected!';
-                conn.on('open', () => {
-                    conn.send(JSON.stringify({ type:'file-info', name:selectedFile.name, size:selectedFile.size }));
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const fileData = e.target.result;
-                        startTime = Date.now();
-                        let offset = 0;
-                        function sendChunk() {
-                            if (offset >= fileData.byteLength) {
-                                conn.send(JSON.stringify({ type:'done' }));
-                                showStatus('sendStatus','🎉 File sent!','success');
-                                updateProgress('send',100,0,fileData.byteLength,fileData.byteLength);
-                                return;
-                            }
-                            conn.send(fileData.slice(offset, offset+CHUNK_SIZE));
-                            offset += CHUNK_SIZE;
-                            const p = Math.min(offset/fileData.byteLength*100,100);
-                            const s = (offset/1024/1024)/((Date.now()-startTime)/1000||0.001);
-                            updateProgress('send',p,s,offset,fileData.byteLength);
-                            setTimeout(sendChunk,1);
-                        }
-                        sendChunk();
-                    };
-                    reader.readAsArrayBuffer(selectedFile);
-                });
-            });
-        });
+function formatSpeed(bps) {
+  if (bps < 1024) return bps.toFixed(0) + ' B/s';
+  if (bps < 1048576) return (bps/1024).toFixed(1) + ' KB/s';
+  return (bps/1048576).toFixed(2) + ' MB/s';
+}
 
-        function copyLink() {
-            document.getElementById('linkInput').select();
-            document.execCommand('copy');
-            showStatus('sendStatus','✅ Link copied!','success');
-        }
+function showStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status ' + type;
+}
 
-        window.onload = () => {
-            const p = new URLSearchParams(window.location.search).get('peer');
-            if (p) {
-                document.getElementById('roomInput').value = window.location.href;
-                showStatus('recvStatus','🔗 Link detected! Click Join.','info');
-            }
-        };
+function updateProgress(side, bytes, total) {
+  const pct = total > 0 ? Math.min((bytes/total)*100, 100) : 0;
+  const p = side === 'send' ? 'send' : 'recv';
+  document.getElementById(p+'ProgressBar').style.width = pct + '%';
+  document.getElementById(p+'Percent').textContent = Math.round(pct) + '%';
+  document.getElementById(p+'Size').textContent = formatSize(bytes) + ' / ' + formatSize(total);
+  const now = Date.now();
+  if (lastTime) {
+    const dt = (now - lastTime) / 1000;
+    const db = bytes - lastBytes;
+    if (dt > 0.1) document.getElementById(p+'Speed').textContent = formatSpeed(db/dt);
+  }
+  lastBytes = bytes;
+  lastTime = now;
+}
 
-        async function joinRoom() {
-            let input = document.getElementById('roomInput').value.trim();
-            if (!input) { showStatus('recvStatus','❌ Enter a link!','error'); return; }
-            let peerId = input.includes('?peer=') ? input.split('?peer=')[1] : input;
-            showStatus('recvStatus','⏳ Connecting...','info');
-            document.getElementById('receiveProgress').style.display = 'block';
-            await initPeer();
-            const conn = peer.connect(peerId, { reliable:true, serialization:'binary' });
-            conn.on('open', () => {
-                document.getElementById('recvStatusText').textContent = 'Connected!';
-                showStatus('recvStatus','✅ Connected! Waiting for file...','success');
-            });
-            conn.on('data', (data) => {
-                if (typeof data === 'string') {
-                    const msg = JSON.parse(data);
-                    if (msg.type === 'file-info') {
-                        totalSize = msg.size; receivedFileName = msg.name;
-                        receivedChunks = []; receivedSize = 0; startTime = Date.now();
-                        showStatus('recvStatus','📄 Receiving: '+msg.name+' ('+formatSize(msg.size)+')','info');
-                    } else if (msg.type === 'done') {
-                        const blob = new Blob(receivedChunks);
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url; a.download = receivedFileName; a.click();
-                        URL.revokeObjectURL(url);
-                        showStatus('recvStatus','🎉 File downloaded!','success');
-                        updateProgress('recv',100,0,totalSize,totalSize);
-                    }
-                } else {
-                    receivedChunks.push(data);
-                    receivedSize += data.byteLength;
-                    const p = totalSize>0?(receivedSize/totalSize*100):0;
-                    const s = (receivedSize/1024/1024)/((Date.now()-startTime)/1000||0.001);
-                    updateProgress('recv',p,s,receivedSize,totalSize);
-                }
-            });
-            conn.on('error', () => showStatus('recvStatus','❌ Connection failed!','error'));
-            conn.on('close', () => showStatus('recvStatus','⚠️ Connection closed.','warning'));
-        }
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); if(e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => { if(e.target.files[0]) selectFile(e.target.files[0]); });
 
-        function formatSize(b) {
-            if(b<1024) return b+' B';
-            if(b<1048576) return (b/1024).toFixed(1)+' KB';
-            return (b/1048576).toFixed(2)+' MB';
-        }
+function selectFile(file) {
+  if (file.size > 50*1024*1024) { showStatus('sendStatus','❌ Max 50MB!','error'); return; }
+  selectedFile = file;
+  document.getElementById('fileName').textContent = '📄 ' + file.name;
+  document.getElementById('fileSize').textContent = formatSize(file.size);
+  document.getElementById('fileInfo').style.display = 'block';
+  document.getElementById('shareBtn').disabled = false;
+  showStatus('sendStatus','✅ File selected! Click Generate Share Link.','info');
+}
 
-        function updateProgress(t,p,s,r,total) {
-            const x = t==='send'?'send':'recv';
-            document.getElementById(x+'ProgressBar').style.width=Math.min(p,100)+'%';
-            document.getElementById(x+'Percent').textContent=Math.round(Math.min(p,100))+'%';
-            document.getElementById(x+'Speed').textContent=s.toFixed(2)+' MB/s';
-            document.getElementById(x+'Size').textContent=formatSize(r)+' / '+formatSize(total);
-        }
+document.getElementById('shareBtn').addEventListener('click', () => {
+  if (!selectedFile) return;
+  document.getElementById('shareBtn').disabled = true;
+  myRole = 'sender';
+  myRoom = genRoomId();
+  const s = initSocket();
+  s.emit('create-room', myRoom);
+  s.on('room-created', () => {
+    const shareUrl = window.location.origin + '/?room=' + myRoom;
+    document.getElementById('linkInput').value = shareUrl;
+    document.getElementById('shareLink').style.display = 'block';
+    document.getElementById('sendProgress').style.display = 'block';
+    showStatus('sendStatus','⏳ Waiting for receiver to join...','info');
+  });
+  s.on('receiver-ready', () => {
+    showStatus('sendStatus','✅ Receiver connected! Sending...','success');
+    document.getElementById('sendStatusText').textContent = 'Sending...';
+    startTime = Date.now(); lastBytes = 0; lastTime = null;
+    sendFile(s);
+  });
+});
 
-        function showStatus(id,msg,type) {
-            const el=document.getElementById(id);
-            el.textContent=msg; el.className='status '+type;
-        }
-    </script>
+function sendFile(s) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const buf = e.target.result;
+    s.emit('file-info', { room: myRoom, name: selectedFile.name, size: selectedFile.size });
+    let offset = 0;
+    function nextChunk() {
+      if (offset >= buf.byteLength) {
+        s.emit('file-done', { room: myRoom });
+        showStatus('sendStatus','🎉 File sent successfully!','success');
+        document.getElementById('sendProgressBar').style.width = '100%';
+        document.getElementById('sendPercent').textContent = '100%';
+        return;
+      }
+      const chunk = buf.slice(offset, offset + CHUNK_SIZE);
+      const arr = Array.from(new Uint8Array(chunk));
+      s.emit('file-chunk', { room: myRoom, data: arr, offset: offset });
+      offset += CHUNK_SIZE;
+      updateProgress('send', Math.min(offset, buf.byteLength), buf.byteLength);
+      setTimeout(nextChunk, 5);
+    }
+    nextChunk();
+  };
+  reader.readAsArrayBuffer(selectedFile);
+}
+
+function copyLink() {
+  document.getElementById('linkInput').select();
+  document.execCommand('copy');
+  showStatus('sendStatus','✅ Link copied!','success');
+}
+
+window.onload = () => {
+  const room = new URLSearchParams(window.location.search).get('room');
+  if (room) {
+    document.getElementById('roomInput').value = window.location.origin + '/?room=' + room;
+    showStatus('recvStatus','🔗 Link detected! Click Join.','info');
+  }
+};
+
+function joinRoom() {
+  let input = document.getElementById('roomInput').value.trim();
+  if (!input) { showStatus('recvStatus','❌ Paste a share link!','error'); return; }
+  let room = input.includes('room=') ? input.split('room=')[1].split('&')[0] : input;
+  room = room.toUpperCase().trim();
+  showStatus('recvStatus','⏳ Connecting...','info');
+  document.getElementById('receiveProgress').style.display = 'block';
+  const s = initSocket();
+  s.emit('join-room', room);
+  s.on('room-not-found', () => showStatus('recvStatus','❌ Room not found!','error'));
+  s.on('file-info', data => {
+    totalSize = data.size; receivedFileName = data.name;
+    receivedChunks = []; receivedSize = 0;
+    startTime = Date.now(); lastBytes = 0; lastTime = null;
+    showStatus('recvStatus','📄 Receiving: ' + data.name + ' (' + formatSize(data.size) + ')','info');
+  });
+  s.on('file-chunk', data => {
+    const arr = new Uint8Array(data.data);
+    receivedChunks.push(arr.buffer);
+    receivedSize += arr.byteLength;
+    updateProgress('recv', receivedSize, totalSize);
+  });
+  s.on('file-done', () => {
+    const blob = new Blob(receivedChunks);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = receivedFileName; a.click();
+    URL.revokeObjectURL(url);
+    showStatus('recvStatus','🎉 File downloaded!','success');
+    document.getElementById('recvProgressBar').style.width = '100%';
+    document.getElementById('recvPercent').textContent = '100%';
+  });
+  s.on('sender-disconnected', () => showStatus('recvStatus','⚠️ Sender disconnected.','error'));
+}
+</script>
 </body>
 </html>
